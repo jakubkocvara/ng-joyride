@@ -3,8 +3,8 @@
     "version": "0.1.13",
     "dependencies": {
         "angular": "*",
-        "jquery": "~1.10.2",
-        "bootstrap": "^3.2.0"
+	    "bootstrap": "^3.0.3",
+	    "jquery": "^2.1.1"
     },
     "main": ["ng-joyride.js","ng-joyride.css"]
 }
