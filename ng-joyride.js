@@ -29,6 +29,8 @@
                          goToPrevFn, skipDemoFn,isEnd, curtainClass , addClassToCurtain, shouldDisablePrevious, attachTobody) {
             this.currentStep = currentStep;
             this.content = $sce.trustAsHtml(config.text);
+            this.showPrev = config.showPrev === false ? false : false; // TODO!!!!!
+            this.showNext = config.showNext === false ? false : true;
             this.selector = config.selector;
             this.template = template || 'ng-joyride-tplv1.html';
             if(config.elementTemplate){
@@ -47,10 +49,9 @@
                     '</div>' +
                     '<div class=\"col-md-8\">' +
                     '<div class=\"pull-right\">' +
-                    '<button id=\"prevBtn\" class=\"prevBtn btn btn-xs\" type=\"button\">Previous</button>' +
-                    ' <button id=\"nextBtn\" class=\"nextBtn btn btn-xs btn-primary\" type=\"button\">' +
-                    _generateTextForNext() +
-                    '</button>' +
+                    (this.showPrev ? '<button id=\"prevBtn\" class=\"prevBtn btn btn-xs\" type=\"button\">Previous</button>' : '') +
+                    (this.showNext ? ' <button id=\"nextBtn\" class=\"nextBtn btn btn-xs btn-primary\" type=\"button\">' + _generateTextForNext() +
+                    '</button>' : '') +
                     '</div>' +
                     '</div>' +
                     '</div>';
@@ -107,6 +108,9 @@
 
             function generate() {
                 $fkEl = $(this.selector);
+                if ($fkEl.length === 0) {
+                    return this.goToNextFn();
+                }
                 _highlightElement.call(this);
                 bindAdvanceOn(this);
                 this.addClassToCurtain(this.curtainClass);
@@ -394,17 +398,18 @@
                     return $q.when($templateCache.get(template)) || $http.get(template, { cache: true });
                 }
                 function goToNext(interval) {
-                    if (!hasReachedEnd()) {
-                        currentStepCount++;
-                        cleanUpPreviousStep();
-                        $timeout(function(){
-                            generateStep();
-                        },interval || 0);
-
-                    } else {
-                        endJoyride();
-                        scope.onFinish();
-                    }
+                    waitForAngular(function () {
+                        if (!hasReachedEnd()) {
+                            currentStepCount++;
+                            cleanUpPreviousStep();
+                            $timeout(function(){
+                                generateStep();
+                            },interval || 0);
+                        } else {
+                            endJoyride();
+                            scope.onFinish();
+                        }
+                    });
                 }
                 function endJoyride() {
                     steps[currentStepCount].cleanUp();
@@ -497,9 +502,7 @@
                     currentStep.generate();
                     if (currentStep.type === "location_change" ||
                         currentStep.type === "function") {
-                        waitForAngular(function () {
-                            goToNext();
-                        });
+                        goToNext();
                     }
                 }
                 function changeCurtainClass(className){
