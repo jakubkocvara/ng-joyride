@@ -29,8 +29,6 @@
                          goToPrevFn, skipDemoFn,isEnd, curtainClass , addClassToCurtain, shouldDisablePrevious, attachTobody) {
             this.currentStep = currentStep;
             this.content = $sce.trustAsHtml(config.text);
-            this.showPrev = config.showPrev === false ? false : false; // TODO!!!!!
-            this.showNext = config.showNext === false ? false : true;
             this.selector = config.selector;
             this.template = template || 'ng-joyride-tplv1.html';
             if(config.elementTemplate){
