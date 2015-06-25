@@ -25,8 +25,7 @@
         );
     }]);
     drctv.factory('joyrideElement', ['$timeout', '$compile', '$sce', function ($timeout, $compile, $sce) {
-        function Element(config, currentStep, template, loadTemplateFn, hasReachedEndFn, goToNextFn,
-                         goToPrevFn, skipDemoFn,isEnd, curtainClass , addClassToCurtain, shouldDisablePrevious, attachTobody) {
+            function Element(config, currentStep, template, loadTemplateFn, hasReachedEndFn, goToNextFn, goToPrevFn, skipDemoFn,isEnd, curtainClass , addClassToCurtain, shouldDisablePrevious, attachTobody) {
             this.currentStep = currentStep;
             this.content = $sce.trustAsHtml(config.text);
             this.selector = config.selector;
@@ -47,9 +46,9 @@
                     '</div>' +
                     '<div class=\"col-md-8\">' +
                     '<div class=\"pull-right\">' +
-                    (this.showPrev ? '<button id=\"prevBtn\" class=\"prevBtn btn btn-xs\" type=\"button\">Previous</button>' : '') +
-                    (this.showNext ? ' <button id=\"nextBtn\" class=\"nextBtn btn btn-xs btn-primary\" type=\"button\">' + _generateTextForNext() +
-                    '</button>' : '') +
+                    _generatePrevButton() +
+                    _generateNextButton() +
+                    '</button>' +
                     '</div>' +
                     '</div>' +
                     '</div>';
@@ -69,15 +68,19 @@
             this.addClassToCurtain = addClassToCurtain;
             this.shouldDisablePrevious = shouldDisablePrevious;
             this.attachTobody = attachTobody;
-            function _generateTextForNext() {
+            this.prev = true;
+            this.next = true;
+            function _generateNextButton() {
+                var text = 'Next&nbsp;<i class=\"glyphicon glyphicon-chevron-right\">';
+                var tpl = '<button id=\"nextBtn\" class=\"nextBtn btn btn-xs btn-primary\" type=\"button\">' + text + '</button>';
+                return tpl;
+            }
 
-                if (isEnd) {
 
-                    return 'Finish';
-                } else {
-                    return 'Next&nbsp;<i class=\"glyphicon glyphicon-chevron-right\">';
-
-                }
+            function _generatePrevButton() {
+                var text = 'Previous';
+                var tpl = '<button id=\"prevBtn\" class=\"prevBtn btn btn-xs\" type=\"button\">' + text + '</button>';
+                return tpl;
             }
 
             if (config.advanceOn) {
@@ -97,18 +100,17 @@
                         $('.nextBtn').one("click",self.goToNextFn);
                         $('.prevBtn').one("click",self.goToPrevFn);
                         $('.skipBtn').one("click",self.skipDemoFn);
-                        if(self.shouldDisablePrevious){
+
+                        /*if(self.shouldDisablePrevious){
                             $('.prevBtn').prop('disabled', true);
-                        }
+                        }*/
+                        showButtons(self.prev, self.next, self.hasReachedEndFn);
                     });
                 }, 500);
             }
 
             function generate() {
                 $fkEl = $(this.selector);
-                if ($fkEl.length === 0) {
-                    return this.goToNextFn();
-                }
                 _highlightElement.call(this);
                 bindAdvanceOn(this);
                 this.addClassToCurtain(this.curtainClass);
@@ -126,8 +128,6 @@
                 if (step.advanceOn) {
                     return $(step.advanceOn.element).bind(step.advanceOn.event, step.goToNextFn);
                 }
-
-                return $fkEl.on("click", stopEvent);
             }
 
             function _generateHtml() {
@@ -175,25 +175,41 @@
                     $fkEl.removeClass(this.staticClass);
                     $fkEl.removeClass(this.nonStaticClass);
                 }
-
-
-
             }
 
             function cleanUp() {
                 _unhighlightElement.call(this);
                 if($fkEl){
-                    $fkEl.off("click",stopEvent);
                     $($fkEl).popover('destroy');
                 }
+            }
 
+            function updateButtons(prev, next) {                
+                this.prev = prev;
+                this.next = next;
+                showButtons(prev, next, this.hasReachedEndFn);
+            }
 
+            function showButtons(prev, next, end) {
+                if (prev) {
+                    $('.prevBtn').show();
+                } else {
+                    $('.prevBtn').hide();
+                }
 
+                if (next) {
+                    $('.nextBtn').show();
+                } else if (end) {
+                    $('.nextBtn').html('Finish').show();
+                } else {
+                    $('.nextBtn').hide();
+                }
             }
 
             return {
                 generate: generate,
-                cleanUp: cleanUp
+                cleanUp: cleanUp,
+                updateButtons: updateButtons
             };
 
 
@@ -203,7 +219,6 @@
     drctv.factory('joyrideTitle', ['$timeout', '$compile', '$sce', function ($timeout, $compile, $sce) {
 
         function Title(config, currentStep, scope, loadTemplateFn, hasReachedEndFn, goToNextFn, goToPrevFn, skipDemoFn, curtainClass, addClassToCurtain, shouldDisablePrevious) {
-
             this.currentStep = currentStep;
             this.heading = config.heading;
             this.content = $sce.trustAsHtml(config.text);
@@ -219,6 +234,8 @@
             this.curtainClass = curtainClass;
             this.addClassToCurtain = addClassToCurtain;
             this.shouldDisablePrevious = shouldDisablePrevious;
+            this.prev = true;
+            this.next = true;
         }
 
         Title.prototype = (function () {
@@ -248,12 +265,12 @@
                     $('.nextBtn').one("click",function(){ self.goToNextFn(200);});
                     $('.skipBtn').one("click",self.skipDemoFn);
                     $('.prevBtn').one("click",function(){ self.goToPrevFn(200);});
-
+                    /*
                     if(self.shouldDisablePrevious){
                         $('.prevBtn').prop('disabled', true);
                     }
-
-
+                    */
+                    showButtons(self.prev, self.next);
                 });
             }
 
@@ -266,9 +283,30 @@
 
             }
 
+            function updateButtons(prev, next) {
+                this.prev = prev;
+                this.next = next;
+                showButtons(prev, next, this.hasReachedEndFn());
+            }
+
+            function showButtons(prev, next, end) {
+                var self = this;
+                if (prev) {
+                    $('.prevBtn').show();
+                } else {
+                    $('.prevBtn').hide();
+                }
+                if (next || end) {
+                    $('.nextBtn').show();
+                } else {
+                    $('.nextBtn').hide();
+                }
+            }
+
             return {
                 generate: generateTitle,
-                cleanUp: cleanUp
+                cleanUp: cleanUp,
+                updateButtons: updateButtons
             };
 
         })();
@@ -322,9 +360,7 @@
             this.path = config.path;
             this.currentStep = currentStep;
             this.prevPath = "";
-            this.type = "location_change"
-            ;
-
+            this.type = "location_change";
         }
 
         LocationChange.prototype = (function () {
@@ -395,11 +431,16 @@
                     }
                     return $q.when($templateCache.get(template)) || $http.get(template, { cache: true });
                 }
+
                 function goToNext(interval) {
                     waitForAngular(function () {
+                        steps[currentStepCount].cleanUp();
                         if (!hasReachedEnd()) {
-                            currentStepCount++;
-                            cleanUpPreviousStep();
+                            if (!findNext(true)) {
+                                endJoyride();
+                                scope.onFinish();
+                                return;
+                            }
                             $timeout(function(){
                                 generateStep();
                             },interval || 0);
@@ -409,18 +450,11 @@
                         }
                     });
                 }
-                function endJoyride() {
-                    steps[currentStepCount].cleanUp();
-                    dropCurtain(false);
-                    $timeout(function () {
-                        scope.ngJoyRide = false;
-                    });
-                }
+
                 function goToPrev(interval) {
                     steps[currentStepCount].cleanUp();
                     var requires_timeout = false;
-                    currentStepCount -= 1;
-
+                    /*
                     // Rollback previous steps until we hit a title or element.
                     function rollbackSteps(s, i) {
                         s[i].rollback();
@@ -435,7 +469,14 @@
                             steps[currentStepCount].rollback();
                         }
                         currentStepCount -= 1;
+                    }*/
+
+                    if (!findPrev(true)) {
+                        endJoyride();
+                        scope.onFinish();
+                        return;
                     }
+
                     requires_timeout = requires_timeout || interval;
                     if (requires_timeout) {
                         $timeout(generateStep, interval || 100);
@@ -443,6 +484,62 @@
                     else {
                         generateStep();
                     }
+                }
+
+                function findNext(go) {
+                    var tmpCount = currentStepCount;
+                    while (true) {
+                        tmpCount++;
+                        if (tmpCount > (steps.length - 1)) {
+                            return false;
+                        }
+                        if (steps[tmpCount].type === 'element') {
+                            var el = $(steps[tmpCount].selector);
+                            if (el.length) {
+                                if (go) {
+                                    currentStepCount = tmpCount;
+                                }
+                                return true;
+                            }
+                        } else {
+                            if (go) {
+                                currentStepCount = tmpCount;
+                            }
+                            return true;
+                        }
+                    }
+                }
+
+                function findPrev(go) {
+                    var tmpCount = currentStepCount;
+                    while (true) {
+                        tmpCount--;
+                        if (tmpCount < 0) {
+                            return false;                          
+                        }              
+                        if (steps[tmpCount].type === 'element') {
+                            var el = $(steps[tmpCount].selector);
+                            if (el.length) {
+                                if (go) {
+                                    currentStepCount = tmpCount;
+                                }
+                                return true;
+                            }                            
+                        } else {
+                            if (go) {
+                                currentStepCount = tmpCount;
+                            }
+                            return true;
+                        }
+                    }
+                }
+
+                function endJoyride() {
+                    steps[currentStepCount].cleanUp();
+                    dropCurtain(false);
+                    $timeout(function () {
+                        scope.ngJoyRide = false;
+                    });
                 }
 
                 function skipDemo() {
@@ -475,13 +572,24 @@
                         destroyJoyride();
                         initializeJoyride();
                         currentStepCount = 0;
-                        dropCurtain(true);
+                        //dropCurtain(true);
                         cleanUpPreviousStep();
                         generateStep();
                     } else {
                         destroyJoyride();
                     }
                 });
+
+                scope.$watch(function () { 
+                        return $('*').length;
+                    },
+                    function (newValue, oldValue) {
+                        if (newValue !== oldValue && steps[currentStepCount]) {
+                            steps[currentStepCount].updateButtons(findPrev(false), findNext(false));
+                        }
+                    }
+                  );
+
                 function destroyJoyride(){
                     steps.forEach(function(elem){
                         elem.cleanUp();
@@ -498,6 +606,7 @@
                 function generateStep() {
                     var currentStep = steps[currentStepCount];
                     currentStep.generate();
+                    currentStep.updateButtons(findPrev(false), findNext(false));
                     if (currentStep.type === "location_change" ||
                         currentStep.type === "function") {
                         goToNext();
@@ -541,7 +650,6 @@
                         }
 
                     });
-
                     // Listen for events
                     element.on('joyride:prev', goToPrev);
                     element.on('joyride:next', goToNext);
