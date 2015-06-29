@@ -568,6 +568,9 @@
                 scope.$watch('ngJoyRide', function (newval, oldval) {
                     if(newval){
                         destroyJoyride();
+                        if (!scope.config.length) {
+                          return;
+                        }
                         initializeJoyride();
                         currentStepCount = 0;
                         //dropCurtain(true);
